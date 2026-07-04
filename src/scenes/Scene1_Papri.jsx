@@ -18,6 +18,7 @@ export default function Scene1_Papri({ onComplete }) {
   const animIdRef = useRef(null)
   const particlesRef = useRef([])
   const bgMeshRef = useRef(null)
+  const explodedRef = useRef(false) // 도시 폭발(clay 진입) 여부 — BG 늦은 로드 레이스 방지
   const clayMeshesRef = useRef([])
 
   const [phase, setPhase] = useState('city') // city | explode | clay | input | warning | map
@@ -47,6 +48,7 @@ export default function Scene1_Papri({ onComplete }) {
 
     const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 1000)
     camera.position.set(0, 2, 8)
+    camera.lookAt(0, 0.6, 0)
     cameraRef.current = camera
 
     // 조명
@@ -73,6 +75,8 @@ export default function Scene1_Papri({ onComplete }) {
         glb.scale.setScalar(1.0)
         glb.position.set(0, -1, 0)
 
+        // 이미 폭발(clay 진입)했다면 늦게 도착한 BG는 버림 (레이스 방지)
+        if (explodedRef.current) return
         // 원본 텍스처/재질 유지
         glb.traverse((child) => {
           if (child.isMesh) child.castShadow = true
@@ -177,6 +181,7 @@ export default function Scene1_Papri({ onComplete }) {
   const handleCityClick = useCallback(() => {
     if (phase !== 'city') return
     setPhase('explode')
+    explodedRef.current = true
 
     const scene = sceneRef.current
     if (!scene) return
@@ -219,7 +224,9 @@ export default function Scene1_Papri({ onComplete }) {
 
     const gltfLoader = new GLTFLoader()
 
-    const positions = [-2.2, 0, 2.2]
+    const positions = [-0.92, 0, 0.92] // 모바일 세로 화면에서 3개 모두 보이도록 간격 축소
+    const CLAY_Y = 0.7 // 화면 중앙 위쪽에 보이도록
+    const CLAY_SIZE = 1.0 // 정규화 목표 크기 (최대 치수)
     const loaded = [false, false, false]
 
     CLAY_MODELS.forEach((model, i) => {
@@ -227,11 +234,23 @@ export default function Scene1_Papri({ onComplete }) {
         model.path,
         (gltf) => {
           const obj = gltf.scene
-          obj.scale.setScalar(0.4)
-          obj.position.set(positions[i], -0.5, 0)
+
+          // 1) 크기 정규화 — 모델마다 스케일이 달라 최대 치수를 목표값에 맞춤
+          obj.updateMatrixWorld(true)
+          let box = new THREE.Box3().setFromObject(obj)
+          const size = box.getSize(new THREE.Vector3())
+          const maxDim = Math.max(size.x, size.y, size.z) || 1
+          obj.scale.setScalar(CLAY_SIZE / maxDim)
+
+          // 2) 바운딩박스 중심을 원점으로 이동 (내부 원점 차이 보정)
+          obj.updateMatrixWorld(true)
+          box = new THREE.Box3().setFromObject(obj)
+          const center = box.getCenter(new THREE.Vector3())
+          obj.position.sub(center)
+
+          // 3) 텍스처 유지 + 선택 하이라이트용 개별 인스턴스로 복제
           obj.traverse((child) => {
             if (child.isMesh) {
-              // 원본 텍스처 유지 + 선택 하이라이트용 개별 인스턴스로 복제
               child.material = child.material.clone()
               if (child.material.emissive) {
                 child.userData.baseEmissive = child.material.emissive.clone()
@@ -239,25 +258,32 @@ export default function Scene1_Papri({ onComplete }) {
               }
             }
           })
-          obj.baseY = -0.5
-          obj.phaseOffset = i * 1.2
-          scene.add(obj)
-          clayMeshesRef.current[i] = obj
+
+          // 4) 홀더 그룹에 담아 위치/선택 스케일을 정규화와 분리
+          const holder = new THREE.Group()
+          holder.add(obj)
+          holder.position.set(positions[i], CLAY_Y, 0)
+          holder.baseY = CLAY_Y
+          holder.phaseOffset = i * 1.2
+          scene.add(holder)
+          clayMeshesRef.current[i] = holder
 
           loaded[i] = true
           setClayLoaded([...loaded])
         },
         undefined,
         () => {
-          // GLB 로드 실패 시 단순 구체 폴백
-          const geo = new THREE.SphereGeometry(0.4, 32, 32)
+          // GLB 로드 실패 시 단순 구체 폴백 (정규화 크기에 맞춤)
+          const geo = new THREE.SphereGeometry(0.65, 32, 32)
           const mat = new THREE.MeshStandardMaterial({ color: 0xCCC7BE, roughness: 1 })
           const mesh = new THREE.Mesh(geo, mat)
-          mesh.position.set(positions[i], -0.5, 0)
-          mesh.baseY = -0.5
-          mesh.phaseOffset = i * 1.2
-          scene.add(mesh)
-          clayMeshesRef.current[i] = mesh
+          const holder = new THREE.Group()
+          holder.add(mesh)
+          holder.position.set(positions[i], CLAY_Y, 0)
+          holder.baseY = CLAY_Y
+          holder.phaseOffset = i * 1.2
+          scene.add(holder)
+          clayMeshesRef.current[i] = holder
           loaded[i] = true
           setClayLoaded([...loaded])
         }
@@ -288,7 +314,7 @@ export default function Scene1_Papri({ onComplete }) {
       })
       // 선택된 조각 살짝 앞으로 + 확대
       mesh.position.z = selected ? 1 : 0
-      mesh.scale.setScalar(selected ? 0.46 : 0.4)
+      mesh.scale.setScalar(selected ? 1.16 : 1)
     })
   }
 

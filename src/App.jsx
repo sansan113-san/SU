@@ -54,8 +54,11 @@ export default function App() {
     return () => { if (cleanup) cleanup() }
   }, [])
 
-  // 첫 인터랙션 시 앰비언트 시작 + 나레이션 Audio 언락(iOS)
+  // 첫 인터랙션 시 나레이션 Audio 언락(iOS)만 수행
+  // 자동 앰비언트는 재생하지 않음 — 소리는 가이드가 송출할 때만 남
   const handleFirstInteraction = () => {
+    if (audioStarted) return
+    setAudioStarted(true)
     // iOS: 사용자 제스처 안에서 한 번 재생해두면 이후 프로그램 재생 허용
     if (!narrationElRef.current) {
       const el = new Audio()
@@ -64,12 +67,8 @@ export default function App() {
       narrationElRef.current = el
     }
     const el = narrationElRef.current
-    // 무음 언락: 재생 시도 후 즉시 정지 (첫 명령 전까지 소리 안 남)
+    // 무음 언락: 재생 시도 후 즉시 정지 (가이드 송출 전까지 소리 안 남)
     el.play().then(() => el.pause()).catch(() => {})
-
-    if (audioStarted) return
-    setAudioStarted(true)
-    import('./utils/audioEngine.js').then(({ startAmbient }) => startAmbient())
   }
 
   // 씬 전환

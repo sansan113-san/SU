@@ -30,9 +30,9 @@ export default function Scene2_Move({ onComplete }) {
       setTextPhase(idx)
       if (idx >= narrationLines.length) {
         clearInterval(interval)
-        setTimeout(() => setShowNext(true), 1000)
+        setTimeout(() => setShowNext(true), 800)
       }
-    }, 2200)
+    }, 1800)
     return () => clearInterval(interval)
   }, [])
 
@@ -66,44 +66,51 @@ export default function Scene2_Move({ onComplete }) {
 
         <div style={{
           flex: 1,
+          minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '48px',
-          padding: '40px 24px',
+          gap: '40px',
+          padding: '32px 24px',
           position: 'relative',
-          zIndex: 10
+          zIndex: 10,
+          overflowY: 'auto'
         }}>
           {/* Kohe Avatar */}
           <KoheAvatar size={96} label="코헤 요원" />
 
-          {/* Narration Text */}
+          {/* Narration Text — 최근 몇 줄만 표시해 화면 넘침 방지 */}
           <div style={{
             textAlign: 'center',
             maxWidth: '320px',
             minHeight: '120px',
             display: 'flex',
             flexDirection: 'column',
+            justifyContent: 'flex-end',
             gap: '8px'
           }}>
-            {narrationLines.slice(0, textPhase).map((line, i) => (
-              <p
-                key={i}
-                style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontSize: i === textPhase - 1 ? '18px' : '14px',
-                  fontStyle: 'italic',
-                  fontWeight: 300,
-                  color: i === textPhase - 1 ? 'var(--text-primary)' : 'var(--text-faint)',
-                  lineHeight: 1.7,
-                  transition: 'all 0.8s ease',
-                  animation: i === textPhase - 1 ? 'fadeIn 0.8s ease forwards' : 'none'
-                }}
-              >
-                {line}
-              </p>
-            ))}
+            {narrationLines.map((line, i) => {
+              if (i >= textPhase || i < textPhase - 4) return null
+              const isCurrent = i === textPhase - 1
+              return (
+                <p
+                  key={i}
+                  style={{
+                    fontFamily: 'var(--font-serif)',
+                    fontSize: isCurrent ? '18px' : '14px',
+                    fontStyle: 'italic',
+                    fontWeight: 300,
+                    color: isCurrent ? 'var(--text-primary)' : 'var(--text-faint)',
+                    lineHeight: 1.7,
+                    transition: 'all 0.8s ease',
+                    animation: isCurrent ? 'fadeIn 0.8s ease forwards' : 'none'
+                  }}
+                >
+                  {line}
+                </p>
+              )
+            })}
             {textPhase < narrationLines.length && (
               <div className="dots-loader" style={{ justifyContent: 'center', marginTop: '8px' }}>
                 <span/><span/><span/>
