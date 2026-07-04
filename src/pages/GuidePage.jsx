@@ -231,9 +231,9 @@ export default function GuidePage({ onExit }) {
       <div style={{ padding: '16px 24px' }}>
         <div className="sys-message">
           <span className="sys-icon">💡</span>
-          버튼을 클릭하면 이 기기와 접속된 플레이어 기기에 오디오가 동시 송출됩니다.<br/>
+          버튼을 클릭하면 접속한 모든 플레이어 기기(갤럭시·아이폰)에 나레이션이 실시간 송출됩니다.<br/>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-faint)' }}>
-            * 동일 네트워크/브라우저 기준. 다른 기기 연동 시 서버 연동 필요.
+            * 플레이어는 사이트 접속 후 화면을 한 번 탭하면 자동 연결됩니다. (인터넷 필요)
           </span>
         </div>
       </div>

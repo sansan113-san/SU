@@ -13,6 +13,12 @@ export default function App() {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [audioStarted, setAudioStarted] = useState(false)
 
+  // 나레이션 재생용 단일 Audio 엘리먼트 (iOS 자동재생 정책 대응)
+  const narrationElRef = useRef(null)
+  // 가이드 화면일 땐 이 기기를 플레이어로 취급하지 않음 (자기 방송 되돌이 방지)
+  const showGuideRef = useRef(false)
+  useEffect(() => { showGuideRef.current = showGuide }, [showGuide])
+
   // 씬 공유 데이터
   const [selectedClay, setSelectedClay] = useState(null)
   const [photoDataUrl, setPhotoDataUrl] = useState(null)
@@ -27,23 +33,40 @@ export default function App() {
     return () => window.removeEventListener('hashchange', checkGuide)
   }, [])
 
-  // BroadcastChannel으로 가이드 오디오 수신 → 플레이어 재생
+  // 가이드 오디오 명령 수신 → 플레이어 재생 (기기 간: ntfy.sh 릴레이)
   useEffect(() => {
     let cleanup = null
     import('./utils/broadcast.js').then(({ listenForPlayCommands }) => {
       cleanup = listenForPlayCommands((data) => {
+        if (showGuideRef.current) return // 가이드 기기에서는 재생하지 않음
+        const el = narrationElRef.current
+        if (!el) return
         if (data.type === 'PLAY_AUDIO' && data.trackId) {
-          const audio = new Audio(`audio/${data.trackId}.wav`)
-          audio.volume = 0.9
-          audio.play().catch(() => {})
+          el.src = `audio/${data.trackId}.wav`
+          el.currentTime = 0
+          el.play().catch(() => {})
+        } else if (data.type === 'STOP_AUDIO') {
+          el.pause()
+          el.currentTime = 0
         }
       })
     })
     return () => { if (cleanup) cleanup() }
   }, [])
 
-  // 첫 인터랙션 시 앰비언트 시작
+  // 첫 인터랙션 시 앰비언트 시작 + 나레이션 Audio 언락(iOS)
   const handleFirstInteraction = () => {
+    // iOS: 사용자 제스처 안에서 한 번 재생해두면 이후 프로그램 재생 허용
+    if (!narrationElRef.current) {
+      const el = new Audio()
+      el.volume = 0.9
+      el.playsInline = true
+      narrationElRef.current = el
+    }
+    const el = narrationElRef.current
+    // 무음 언락: 재생 시도 후 즉시 정지 (첫 명령 전까지 소리 안 남)
+    el.play().then(() => el.pause()).catch(() => {})
+
     if (audioStarted) return
     setAudioStarted(true)
     import('./utils/audioEngine.js').then(({ startAmbient }) => startAmbient())
