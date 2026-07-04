@@ -881,3 +881,29 @@ body {
   0%, 100% { transform: scaleY(0.5); opacity: 0.4; }
   50% { transform: scaleY(1); opacity: 1; }
 }
+
+/* ── 모바일 반응형 & 안전영역(노치/홈바) ── */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* 상단 노치 / 하단 홈 인디케이터 침범 방지 */
+.header-bar {
+  padding-top: max(var(--space-md), env(safe-area-inset-top));
+}
+.content-area {
+  padding-bottom: max(var(--space-xl), calc(env(safe-area-inset-bottom) + var(--space-md)));
+}
+.camera-controls {
+  bottom: max(48px, calc(env(safe-area-inset-bottom) + 24px));
+}
+
+/* 작은 폭의 폰 (예: iPhone SE, 갤럭시 소형) */
+@media (max-width: 380px) {
+  .content-area { padding-left: var(--space-md); padding-right: var(--space-md); }
+  .clay-grid { gap: var(--space-sm); }
+  .clay-label { font-size: 9px; }
+}
+
+/* 세로가 짧은 화면 — 여백/간격 축소로 오버플로 방지 */
+@media (max-height: 640px) {
+  .content-area { padding-top: var(--space-lg); gap: var(--space-md); }
+}

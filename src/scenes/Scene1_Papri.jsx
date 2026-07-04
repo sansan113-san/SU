@@ -339,13 +339,15 @@ export default function Scene1_Papri({ onComplete }) {
   }
 
   return (
-    <div className="scene scene-enter">
+    <div
+      className="scene scene-enter"
+      onClick={handleCityClick}
+      style={{ cursor: phase === 'city' ? 'pointer' : 'default' }}
+    >
       {/* 3D Canvas */}
       <canvas
         ref={canvasRef}
         className="three-canvas"
-        style={{ cursor: phase === 'city' ? 'pointer' : 'default' }}
-        onClick={handleCityClick}
       />
 
       {/* UI Layer */}
