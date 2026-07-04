@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import GaugeBar from '../components/GaugeBar.jsx'
 
 export default function Scene4_Photo({ photoDataUrl, selectedClay, onComplete }) {
@@ -34,6 +35,11 @@ export default function Scene4_Photo({ photoDataUrl, selectedClay, onComplete })
     const scene = new THREE.Scene()
     sceneRef.current = scene
 
+    // GLB PBR 텍스처가 자연스럽게 보이도록 중립 환경맵 적용
+    const pmrem = new THREE.PMREMGenerator(renderer)
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
+    scene.environmentIntensity = 0.4
+
     const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
     camera.position.set(0, 0, 5)
     cameraRef.current = camera
@@ -54,11 +60,7 @@ export default function Scene4_Photo({ photoDataUrl, selectedClay, onComplete })
         obj.scale.setScalar(0.5)
         obj.position.set(0, 0.5, 0)
 
-        // 질감 없는 클레이 머티리얼
-        const mat = new THREE.MeshStandardMaterial({
-          color: 0xCCC7BE, roughness: 1.0, metalness: 0.0
-        })
-        obj.traverse(child => { if (child.isMesh) child.material = mat.clone() })
+        // 원본 텍스처/재질 유지
         scene.add(obj)
         clayMeshRef.current = obj
       },

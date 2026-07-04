@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import GaugeBar from '../components/GaugeBar.jsx'
 
 const CLAY_MODELS = [
@@ -58,6 +59,11 @@ export default function Scene1_Papri({ onComplete }) {
     fillLight.position.set(-5, 2, -3)
     scene.add(fillLight)
 
+    // GLB PBR 텍스처가 자연스럽게 보이도록 중립 환경맵 적용
+    const pmrem = new THREE.PMREMGenerator(renderer)
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
+    scene.environmentIntensity = 0.35
+
     // BG.glb 백그라운드 로드 (스트리밍)
     const gltfLoader = new GLTFLoader()
     gltfLoader.load(
@@ -67,17 +73,9 @@ export default function Scene1_Papri({ onComplete }) {
         glb.scale.setScalar(1.0)
         glb.position.set(0, -1, 0)
 
-        // 무색 클레이 머티리얼 오버라이드
-        const clayMat = new THREE.MeshStandardMaterial({
-          color: 0xD8D3CA,
-          roughness: 0.9,
-          metalness: 0.0,
-        })
+        // 원본 텍스처/재질 유지
         glb.traverse((child) => {
-          if (child.isMesh) {
-            child.material = clayMat
-            child.castShadow = true
-          }
+          if (child.isMesh) child.castShadow = true
         })
         bgMeshRef.current = glb
         scene.add(glb)
@@ -220,11 +218,6 @@ export default function Scene1_Papri({ onComplete }) {
     if (!scene) return
 
     const gltfLoader = new GLTFLoader()
-    const clayMat = new THREE.MeshStandardMaterial({
-      color: 0xCCC7BE,
-      roughness: 1.0,
-      metalness: 0.0,
-    })
 
     const positions = [-2.2, 0, 2.2]
     const loaded = [false, false, false]
@@ -238,7 +231,12 @@ export default function Scene1_Papri({ onComplete }) {
           obj.position.set(positions[i], -0.5, 0)
           obj.traverse((child) => {
             if (child.isMesh) {
-              child.material = clayMat.clone()
+              // 원본 텍스처 유지 + 선택 하이라이트용 개별 인스턴스로 복제
+              child.material = child.material.clone()
+              if (child.material.emissive) {
+                child.userData.baseEmissive = child.material.emissive.clone()
+                child.userData.baseEmissiveIntensity = child.material.emissiveIntensity ?? 1
+              }
             }
           })
           obj.baseY = -0.5
@@ -271,28 +269,26 @@ export default function Scene1_Papri({ onComplete }) {
 
   // Clay 선택 하이라이트
   function highlightClay(idx) {
-    const selectedMat = new THREE.MeshStandardMaterial({
-      color: 0xD8C4A8,
-      roughness: 0.85,
-      metalness: 0.05,
-      emissive: new THREE.Color(0xC4A882),
-      emissiveIntensity: 0.15,
-    })
-    const neutralMat = new THREE.MeshStandardMaterial({
-      color: 0xCCC7BE,
-      roughness: 1.0,
-      metalness: 0.0,
-    })
-
     clayMeshesRef.current.forEach((mesh, i) => {
       if (!mesh) return
+      const selected = i === idx
+      // 텍스처는 유지하고 발광(emissive)만 조절해 선택 표시
       mesh.traverse((child) => {
-        if (child.isMesh) {
-          child.material = i === idx ? selectedMat.clone() : neutralMat.clone()
+        if (child.isMesh && child.material?.emissive) {
+          if (selected) {
+            child.material.emissive.setHex(0xC4A882)
+            child.material.emissiveIntensity = 0.35
+          } else if (child.userData.baseEmissive) {
+            child.material.emissive.copy(child.userData.baseEmissive)
+            child.material.emissiveIntensity = child.userData.baseEmissiveIntensity
+          } else {
+            child.material.emissiveIntensity = 0
+          }
         }
       })
-      // 선택된 조각 살짝 앞으로
-      mesh.position.z = i === idx ? 1 : 0
+      // 선택된 조각 살짝 앞으로 + 확대
+      mesh.position.z = selected ? 1 : 0
+      mesh.scale.setScalar(selected ? 0.46 : 0.4)
     })
   }
 
