@@ -6,56 +6,56 @@ const TRACKS = [
     id: '1',
     scene: 'SCENE 01 — 파프리',
     title: '나레이션 01 — 코헤 소개 & Cor 선택',
-    path: '/audio/1.wav',
+    path: 'audio/1.wav',
     desc: '"안녕하세요. 장소 수리반 [코헤]입니다…"'
   },
   {
     id: '2',
     scene: 'SCENE 02 — 이동',
     title: '나레이션 02 — 현장 묘사 1',
-    path: '/audio/2.wav',
+    path: 'audio/2.wav',
     desc: '"그곳은 어둡지도 밝지도 않아요…"'
   },
   {
     id: '3',
     scene: 'SCENE 02 — 이동',
     title: '나레이션 03 — 현장 묘사 2',
-    path: '/audio/3.wav',
+    path: 'audio/3.wav',
     desc: '"기다리고 있어요. 쇠와 유리가 부딪히는 소리…"'
   },
   {
     id: '4',
     scene: 'SCENE 03 — 도착',
     title: '나레이션 04 — 미세 관찰',
-    path: '/audio/4.wav',
+    path: 'audio/4.wav',
     desc: '"이제 벽을 등지고 잠시 눈을 감아보세요…"'
   },
   {
     id: '5',
     scene: 'SCENE 03 — 도착',
     title: '나레이션 05 — 촬영 지시',
-    path: '/audio/5.wav',
+    path: 'audio/5.wav',
     desc: '"이제 휴대폰 속 카메라를 클릭해 균열을 찍어봅니다."'
   },
   {
     id: '6',
     scene: 'SCENE 05 — 물증',
     title: '나레이션 06 — 수리 완료',
-    path: '/audio/6.wav',
+    path: 'audio/6.wav',
     desc: '"성공적으로 수리되었습니다…"'
   },
   {
     id: '7',
     scene: 'SCENE 06 — 복귀',
     title: '나레이션 07 — 기억과 장소',
-    path: '/audio/7.wav',
+    path: 'audio/7.wav',
     desc: '"우리가 무심히 지나는 장소들은…"'
   },
   {
     id: '8',
     scene: 'SCENE 06 — 복귀',
     title: '나레이션 08 — 마지막 임무',
-    path: '/audio/8.wav',
+    path: 'audio/8.wav',
     desc: '"이제는 당신 차례입니다…"'
   },
 ]

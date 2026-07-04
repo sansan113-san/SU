@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import * as THREE from 'three'
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import GaugeBar from '../components/GaugeBar.jsx'
 
 const CLAY_MODELS = [
-  { id: 'lea', path: '/models/lea.glb', label: 'LEA' },
-  { id: 'ca', path: '/models/ca.glb', label: 'CA' },
-  { id: 'egg', path: '/models/egg.glb', label: 'EGG' },
+  { id: 'lea', path: 'models/lea.glb', label: 'LEA' },
+  { id: 'ca', path: 'models/ca.glb', label: 'CA' },
+  { id: 'egg', path: 'models/egg.glb', label: 'EGG' },
 ]
 
 export default function Scene1_Papri({ onComplete }) {
@@ -59,13 +58,14 @@ export default function Scene1_Papri({ onComplete }) {
     fillLight.position.set(-5, 2, -3)
     scene.add(fillLight)
 
-    // BG.fbx 백그라운드 로드 (스트리밍)
-    const fbxLoader = new FBXLoader()
-    fbxLoader.load(
-      '/models/BG.fbx',
-      (fbx) => {
-        fbx.scale.setScalar(0.01)
-        fbx.position.set(0, -1, 0)
+    // BG.glb 백그라운드 로드 (스트리밍)
+    const gltfLoader = new GLTFLoader()
+    gltfLoader.load(
+      'models/BG.glb',
+      (gltf) => {
+        const glb = gltf.scene
+        glb.scale.setScalar(1.0)
+        glb.position.set(0, -1, 0)
 
         // 무색 클레이 머티리얼 오버라이드
         const clayMat = new THREE.MeshStandardMaterial({
@@ -73,18 +73,18 @@ export default function Scene1_Papri({ onComplete }) {
           roughness: 0.9,
           metalness: 0.0,
         })
-        fbx.traverse((child) => {
+        glb.traverse((child) => {
           if (child.isMesh) {
             child.material = clayMat
             child.castShadow = true
           }
         })
-        bgMeshRef.current = fbx
-        scene.add(fbx)
+        bgMeshRef.current = glb
+        scene.add(glb)
       },
       undefined,
       (err) => {
-        // FBX 로드 실패 시 폴백: 프로시저럴 도시
+        // GLB 로드 실패 시 폴백: 프로시저럴 도시
         createProceduralCity(scene)
       }
     )

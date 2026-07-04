@@ -33,7 +33,7 @@ export default function App() {
     import('./utils/broadcast.js').then(({ listenForPlayCommands }) => {
       cleanup = listenForPlayCommands((data) => {
         if (data.type === 'PLAY_AUDIO' && data.trackId) {
-          const audio = new Audio(`/audio/${data.trackId}.wav`)
+          const audio = new Audio(`audio/${data.trackId}.wav`)
           audio.volume = 0.9
           audio.play().catch(() => {})
         }

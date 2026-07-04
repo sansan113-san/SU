@@ -45,7 +45,7 @@ export default function Scene4_Photo({ photoDataUrl, selectedClay, onComplete })
     scene.add(dirLight)
 
     // 선택된 Clay 모델 로드
-    const modelPath = selectedClay?.path || '/models/egg.glb'
+    const modelPath = selectedClay?.path || 'models/egg.glb'
     const loader = new GLTFLoader()
     loader.load(
       modelPath,
